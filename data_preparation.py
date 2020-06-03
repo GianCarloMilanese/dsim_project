@@ -96,19 +96,20 @@ def transform_categorical_y(labels):
     from sklearn.preprocessing import OneHotEncoder
     enc = OneHotEncoder()
     y = enc.fit_transform(np.array(labels).reshape(-1, 1)).toarray()
-    label_0 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 0]).reshape(1, -1))[0][0]
-    label_1 = enc.inverse_transform(np.array([0, 1, 0, 0, 0, 0, 0]).reshape(1, -1))[0][0]
-    label_2 = enc.inverse_transform(np.array([0, 0, 1, 0, 0, 0, 0]).reshape(1, -1))[0][0]
-    label_3 = enc.inverse_transform(np.array([0, 0, 0, 1, 0, 0, 0]).reshape(1, -1))[0][0]
-    label_4 = enc.inverse_transform(np.array([0, 0, 0, 0, 1, 0, 0]).reshape(1, -1))[0][0]
-    label_5 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
-    label_6 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1]).reshape(1, -1))[0][0]
-    target_names = [label_0, label_1, label_2, label_3, label_4, label_5, label_6]
+    label_0 = enc.inverse_transform(np.array([1, 0, 0, 0, 0, 0, 0, 0]).reshape(1, -1))[0][0]
+    label_1 = enc.inverse_transform(np.array([0, 1, 0, 0, 0, 0, 0, 0]).reshape(1, -1))[0][0]
+    label_2 = enc.inverse_transform(np.array([0, 0, 1, 0, 0, 0, 0, 0]).reshape(1, -1))[0][0]
+    label_3 = enc.inverse_transform(np.array([0, 0, 0, 1, 0, 0, 0, 0]).reshape(1, -1))[0][0]
+    label_4 = enc.inverse_transform(np.array([0, 0, 0, 0, 1, 0, 0, 0]).reshape(1, -1))[0][0]
+    label_5 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 1, 0, 0]).reshape(1, -1))[0][0]
+    label_6 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
+    label_7 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
+    target_names = [label_0, label_1, label_2, label_3, label_4, label_5, label_6, label_7]
     return y, target_names
 
 
 def get_list_indexes(lst, a, split_index):
-    return [i for i, x in enumerate(lst) if a in x.split('_')[split_index]]
+    return [i for i, x in enumerate(lst) if a in "_" + x.split('_')[split_index] + "_"]
 
 
 def split_and_augment_dataset(audio_dir: str, y_type: str, n_category_audio_to_pick_test: int,
@@ -118,7 +119,7 @@ def split_and_augment_dataset(audio_dir: str, y_type: str, n_category_audio_to_p
                                                         n_noise=5,
                                                         n_pitch=5)
     if y_type == "speakers_us":
-        categories = ['gian', 'alinda', 'khaled']
+        categories = ['_gian_', '_alinda_', '_khaled_', '_ale_']
         # Used later on for getting y label
         split_index = 1
     elif y_type == "speakers_default":
@@ -182,7 +183,6 @@ def prepare_augmented_recordings(audio_dirs: List[str], y_type: List[str], n_cat
         y_train = y_train + train_labels
         X_test = X_test + test_recordings
         y_test = y_test + test_labels
-    print("HERE!")
     X_train = [np.array(x) for x in X_train]
     y_train = [np.array(x) for x in y_train]
     X_test = [np.array(x) for x in X_test]
