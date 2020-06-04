@@ -7,7 +7,8 @@ import shutil
 def pictures_train_test_val_split(input_dir='pictures/',
                                   output_dir='pictures2/',
                                   val_ratio=0.2, test_ratio=0.1,
-                                  classes=None, numpy_random_seed=1):
+                                  classes=None, numpy_random_seed=1,
+                                  verbose=False):
 
     if classes is None:
         classes = os.listdir(input_dir)
@@ -21,7 +22,11 @@ def pictures_train_test_val_split(input_dir='pictures/',
 
         src = input_dir + "/" + cls
 
+        image_extensions = ["jpg", "png", "jpeg"]
         allFileNames = os.listdir(src)
+        allFileNames = [filename for filename in allFileNames if \
+                        filename.split(".")[-1] in image_extensions]
+
         np.random.shuffle(allFileNames)
         trainFileNames, valFileNames, testFileNames = \
             np.split(
@@ -38,11 +43,12 @@ def pictures_train_test_val_split(input_dir='pictures/',
         testFileNames = \
             [src+'/' + name for name in testFileNames.tolist()]
 
-        print(f"Current iclass: {cls}")
-        print(f'Total images: {len(allFileNames)}')
-        print(f'Training: {len(trainFileNames)}')
-        print(f'Validation: {len(valFileNames)}')
-        print(f'Testing: {len(testFileNames)}\n')
+        if verbose:
+            print(f"Current class: {cls}")
+            print(f'Total images: {len(allFileNames)}')
+            print(f'Training: {len(trainFileNames)}')
+            print(f'Validation: {len(valFileNames)}')
+            print(f'Testing: {len(testFileNames)}\n')
 
         for name in trainFileNames:
             shutil.copy(name, output_dir + '/train/' + cls)
