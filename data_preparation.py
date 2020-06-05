@@ -1,6 +1,6 @@
 from typing import List
 from tensorflow import keras
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 import librosa
 import numpy as np
 from tqdm.notebook import tqdm
@@ -77,19 +77,28 @@ def compute_spectrogram(audio, rate=8000, n_fft=1024, hop_length=160, n_mels=128
 def split_train_test_baseline_spectrograms(X, y):
     nsamples, nx, ny = X.shape
     X_2d = X.reshape((nsamples, nx * ny))
-    X_train, X_test, y_train, y_test = train_test_split(X_2d, y, test_size=0.2, random_state=1)
-    return X_train, X_test, y_train, y_test
+    # Get the training set : 60% of original data
+    X_train, X_test_val, y_train, y_test_val = train_test_split(X_2d, y, test_size=0.4, random_state=1)
+    # Get validation and test set, both 20% of original data
+    X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
+    return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-def split_train_test_nn(X, y, test_size=0.2, number_mode=True):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=1)
+def split_train_test_nn(X, y, number_mode=True):
+    # Get the training set: 60% of original data
+    X_train, X_test_val, y_train, y_test_val = train_test_split(X, y, test_size=0.4, random_state=1)
+    # Get val and test set, both 20% of original data
+    X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
+    # Change shape of X for model training purpose
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], X_train.shape[2], 1)
+    X_val = X_val.reshape(X_val.shape[0], X_val.shape[1], X_val.shape[2], 1)
     X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], X_test.shape[2], 1)
     input_shape = (X_train.shape[1], X_train.shape[2], 1)
     if number_mode:
         y_train = keras.utils.to_categorical(y_train, 10)
+        y_val = keras.utils.to_categorical(y_val, 10)
         y_test = keras.utils.to_categorical(y_test, 10)
-    return X_train, X_test, y_train, y_test, input_shape
+    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
 
 
 def transform_categorical_y(labels):
@@ -164,43 +173,55 @@ def split_and_augment_dataset(audio_dir: str, y_type: str, n_category_audio_to_p
     # Get final label. The file format is number_speaker_n.wav
     train_labels = [label.split('_')[split_index] for label in train_labels]
     test_labels = [label.split('_')[split_index] for label in test_labels]
+    train_recordings, val_recordings, train_labels, val_labels = train_test_split(train_recordings,
+                                                                                  train_labels,
+                                                                                  test_size=0.2,
+                                                                                  random_state=1)
 
-    return train_recordings, train_labels, test_recordings, test_labels
+    return train_recordings, train_labels, val_recordings, val_labels, test_recordings, test_labels
 
 
 def prepare_augmented_recordings(audio_dirs: List[str], y_type: List[str], n_category_test: int,
                                  include_pitch: bool):
     X_train = []
     y_train = []
+    X_val = []
+    y_val = []
     X_test = []
     y_test = []
     for i, dir_path in enumerate(audio_dirs):
-        train_recordings, train_labels, test_recordings, test_labels = split_and_augment_dataset(dir_path,
+        train_recordings, train_labels, val_recordings, val_labels, test_recordings, test_labels = split_and_augment_dataset(dir_path,
                                                                                                  y_type[i],
                                                                                                  n_category_test,
                                                                                                  include_pitch)
         X_train = X_train + train_recordings
         y_train = y_train + train_labels
+        X_val = X_val + val_recordings
+        y_val = y_val + val_labels
         X_test = X_test + test_recordings
         y_test = y_test + test_labels
     X_train = [np.array(x) for x in X_train]
     y_train = [np.array(x) for x in y_train]
+    X_val = [np.array(x) for x in X_val]
+    y_val = [np.array(x) for x in y_val]
     X_test = [np.array(x) for x in X_test]
     y_test = [np.array(x) for x in y_test]
     print("conversion_done!")
-    X_train, X_test = compute_spectrograms(X_train, X_test)
-    return X_train, y_train, X_test, y_test
+    X_train, X_val, X_test = compute_spectrograms(X_train, X_val, X_test)
+    return X_train, y_train, X_val, y_val, X_test, y_test
 
 
-def compute_spectrograms(X_train, X_test):
+def compute_spectrograms(X_train, X_val, X_test):
     print("compute_spectrograms >>>")
     # In order to normalise the length of recordings we have to define the maximum length of the various recordings
-    max_length_rec = max(map(np.shape, X_train + X_test))[0]
+    max_length_rec = max(map(np.shape, X_train + X_val + X_test))[0]
     X_train = pad_zeros(X_train, compute_max_y=False, max_y=max_length_rec)
+    X_val = pad_zeros(X_val, compute_max_y=False, max_y=max_length_rec)
     X_test = pad_zeros(X_test, compute_max_y=False, max_y=max_length_rec)
     print("Padding done")
     # Now let's compute the spectrograms
     X_train = [compute_spectrogram(x, normalize=True) for x in X_train]
+    X_val = [compute_spectrogram(x, normalize=True) for x in X_val]
     X_test = [compute_spectrogram(x, normalize=True) for x in X_test]
     print("compute_spectrograms <<<")
-    return X_train, X_test
+    return X_train, X_val, X_test
