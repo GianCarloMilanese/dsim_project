@@ -8,12 +8,14 @@ def pictures_train_test_val_split(input_dir='pictures/',
                                   output_dir='pictures2/',
                                   val_ratio=0.2, test_ratio=0.1,
                                   classes=None, numpy_random_seed=1,
-                                  verbose=False):
+                                  equal_size = True, verbose=False):
 
     if classes is None:
         classes = os.listdir(input_dir)
 
     np.random.seed(numpy_random_seed)
+
+    min_dim = min([len(os.listdir(input_dir+"/"+cls)) for cls in os.listdir(input_dir)])
 
     for cls in classes:
         os.makedirs(output_dir + '/train/' + cls, exist_ok=True)
@@ -28,6 +30,10 @@ def pictures_train_test_val_split(input_dir='pictures/',
                         filename.split(".")[-1] in image_extensions]
 
         np.random.shuffle(allFileNames)
+
+        if equal_size:
+            allFileNames = allFileNames[:min_dim]
+
         trainFileNames, valFileNames, testFileNames = \
             np.split(
                 np.array(allFileNames),
@@ -59,3 +65,6 @@ def pictures_train_test_val_split(input_dir='pictures/',
         for name in testFileNames:
             shutil.copy(name, output_dir + '/test/' + cls)
 
+if __name__ == "__main__":
+    
+    pictures_train_test_val_split("pictures_new", "pictures_split", classes = ["gian", "alinda", "khaled", "luca"], verbose=True)
