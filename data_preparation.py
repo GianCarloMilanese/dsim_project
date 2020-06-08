@@ -8,6 +8,8 @@ import os
 import data_augmentation
 import random
 
+RATE = 8000
+
 
 def load_recordings(paths=["recordings"], label_type="number"):
     res = []
@@ -20,7 +22,7 @@ def load_recordings(paths=["recordings"], label_type="number"):
                     next
                 else:
                     # Load file and extract features
-                    audio, sample_rate = librosa.load(path + "/" + f)
+                    audio, sample_rate = librosa.load(path + "/" + f, sr=RATE)
                     res.append(audio)
     return np.array(res)
 
@@ -121,12 +123,17 @@ def get_list_indexes(lst, a, split_index):
     return [i for i, x in enumerate(lst) if a in "_" + x.split('_')[split_index] + "_"]
 
 
-def split_and_augment_dataset(audio_dir: str, y_type: str, n_category_audio_to_pick_test: int,
-                              include_pitch: bool):
+def split_and_augment_dataset(audio_dir: str,
+                              y_type: str,
+                              n_category_audio_to_pick_test: int,
+                              include_pitch: bool,
+                              max_length: int):
+    print("split_and_augment_dataset >>>")
     augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
                                                         mode="normal",
                                                         n_noise=5,
-                                                        n_pitch=5)
+                                                        n_pitch=5,
+                                                        max_length=max_length)
     if y_type == "speakers_us":
         categories = ['_gian_', '_alinda_', '_khaled_', '_ale_']
         # Used later on for getting y label
@@ -177,12 +184,15 @@ def split_and_augment_dataset(audio_dir: str, y_type: str, n_category_audio_to_p
                                                                                   train_labels,
                                                                                   test_size=0.2,
                                                                                   random_state=1)
-
+    print("split_and_augment_dataset <<<")
     return train_recordings, train_labels, val_recordings, val_labels, test_recordings, test_labels
 
 
-def prepare_augmented_recordings(audio_dirs: List[str], y_type: List[str], n_category_test: int,
-                                 include_pitch: bool):
+def prepare_augmented_recordings(audio_dirs: List[str],
+                                 y_type: List[str],
+                                 n_category_test: int,
+                                 include_pitch: bool,
+                                 max_length: int):
     X_train = []
     y_train = []
     X_val = []
@@ -193,7 +203,8 @@ def prepare_augmented_recordings(audio_dirs: List[str], y_type: List[str], n_cat
         train_recordings, train_labels, val_recordings, val_labels, test_recordings, test_labels = split_and_augment_dataset(dir_path,
                                                                                                  y_type[i],
                                                                                                  n_category_test,
-                                                                                                 include_pitch)
+                                                                                                 include_pitch,
+                                                                                                 max_length)
         X_train = X_train + train_recordings
         y_train = y_train + train_labels
         X_val = X_val + val_recordings
@@ -208,13 +219,14 @@ def prepare_augmented_recordings(audio_dirs: List[str], y_type: List[str], n_cat
     y_test = [np.array(x) for x in y_test]
     print("conversion_done!")
     X_train, X_val, X_test = compute_spectrograms(X_train, X_val, X_test)
-    return X_train, y_train, X_val, y_val, X_test, y_test
+    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val), np.array(X_test), np.array(y_test)
 
 
 def compute_spectrograms(X_train, X_val, X_test):
     print("compute_spectrograms >>>")
     # In order to normalise the length of recordings we have to define the maximum length of the various recordings
     max_length_rec = max(map(np.shape, X_train + X_val + X_test))[0]
+    print(max_length_rec)
     X_train = pad_zeros(X_train, compute_max_y=False, max_y=max_length_rec)
     X_val = pad_zeros(X_val, compute_max_y=False, max_y=max_length_rec)
     X_test = pad_zeros(X_test, compute_max_y=False, max_y=max_length_rec)
