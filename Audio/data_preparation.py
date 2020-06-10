@@ -34,6 +34,86 @@ def load_recordings(paths=["recordings"], label_type="number", sr=RATE):
     return np.array(res)
 
 
+def aavg(input):
+    """
+    Compute average value of the input signal
+    :param input:
+    :return:
+    """
+    return np.mean(np.abs(input), keepdims=True)
+
+
+def sdev(input):
+    """
+    Compute standard deviation of the input signal
+    :param input:
+    :return:
+    """
+    return np.std(input, keepdims=True)
+
+
+def energy(input):
+    """
+    Compute energy of the input signal
+    :param input:
+    :return:
+    """
+    return np.sum((input * 1.0) ** 2, keepdims=True)
+
+
+def zcr(y):
+    """
+    Compute zero crossing rate of the input signal
+    :param y:
+    :return:
+    """
+    # segnale traslato di un'unità
+    ty = np.roll(y, shift=-1)
+
+    # confronto punto a punto del segno di y e ty
+    d = np.sign(y[:-1]) - np.sign(ty[:-1])
+    # [:-1] perché l'ultimo elemento di ty è uguale al primo elemento di y
+
+    # siamo interessati a quando d è diverso da 0, cioè quando il segnale cambia segno
+    dneq0 = np.where(d != 0)[0]
+
+    # calcoliamo quante volte il segnale cambia segno e restituiamo il valore
+    return dneq0.shape
+
+
+def combo(track):
+    """
+    Compute and combine standard deviation, average, energy, zero crossing rate and mfcc of the input signal
+    :param track:
+    :return:
+    """
+    return np.concatenate((sdev(track), aavg(track), energy(track), zcr(track), mfcc(track)))
+
+
+def mfcc(track, rate=8000, min_len=40, sampling=1, n_mfcc=40, flatten=True):
+    """
+    Compute MFCC of the given track
+    :param track: input audio
+    :param rate: sampling rate
+    :param min_len: minimum length of the resulting mfcc
+    :param sampling:
+    :param n_mfcc: number of mfcc to include
+    :param flatten: whether to flatten the output mfcc or not (useful for SVM)
+    :return:
+    """
+    # Campiona i valori
+    signal = track[::sampling]
+    # Calcola coefficienti MFCC
+    mfcc_coefs = librosa.feature.mfcc(signal*1.0, sr=int(rate/sampling), n_mfcc=n_mfcc)
+    # Applica eventuali zeri aggiuntivi per raggiungere una lunghezza fissa
+    pad_width = min_len - mfcc_coefs.shape[1]
+    mfcc_coefs = np.pad(mfcc_coefs, pad_width=((0, 0), (0, pad_width)), mode='constant')
+    if flatten:
+        # Appiattisci rappresentazione per uso con SVM
+        mfcc_coefs = mfcc_coefs.flatten()
+    return mfcc_coefs
+
+
 def load_labels(paths=["recordings"], label_type="number"):
     """
     Load labels (a.k.a Y) of the recordings in the given inputs
@@ -138,6 +218,12 @@ def split_train_test_nn(X, y, number_mode=True):
     X_train, X_test_val, y_train, y_test_val = train_test_split(X, y, test_size=0.4, random_state=1)
     # Get val and test set, both 20% of original data
     X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
+    X_test, X_train, X_val, input_shape, y_test, y_train, y_val = prepare_data_nn(X_test, X_train, X_val, number_mode,
+                                                                                  y_test, y_train, y_val)
+    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
+
+
+def prepare_data_nn(X_test, X_train, X_val, number_mode, y_test, y_train, y_val):
     # Change shape of X for model training purpose
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], X_train.shape[2], 1)
     X_val = X_val.reshape(X_val.shape[0], X_val.shape[1], X_val.shape[2], 1)
@@ -147,7 +233,7 @@ def split_train_test_nn(X, y, number_mode=True):
         y_train = keras.utils.to_categorical(y_train, 10)
         y_val = keras.utils.to_categorical(y_val, 10)
         y_test = keras.utils.to_categorical(y_test, 10)
-    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
+    return X_test, X_train, X_val, input_shape, y_test, y_train, y_val
 
 
 def transform_categorical_y(labels):
@@ -261,7 +347,8 @@ def prepare_augmented_recordings(audio_dirs: List[str],
                                  y_type: List[str],
                                  n_category_test: int,
                                  include_pitch: bool,
-                                 max_length: int):
+                                 max_length: int,
+                                 transform_function="spectrogram"):
     """
     Augment, split in train-val-test and compute spectrograms of the given recordings
     :param audio_dirs: list of path where the recordings of interest are stored
@@ -269,6 +356,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     :param n_category_test: how many sample, for each unique Y value, should be put in the test set
     :param include_pitch: whether to include audio with modified pitch or not
     :param max_length: maximum length a given recording should have in order to be included
+    :param transform_function: whether to transform recordings using MFCC or spectrograms
     :return:
     """
     X_train = []
@@ -297,19 +385,20 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     X_test = [np.array(x) for x in X_test]
     y_test = [np.array(x) for x in y_test]
     print("conversion_done!")
-    X_train, X_val, X_test = compute_spectrograms(X_train, X_val, X_test)
+    X_train, X_val, X_test = transform_recordings(X_train, X_val, X_test, transform_function)
     return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val), np.array(X_test), np.array(y_test)
 
 
-def compute_spectrograms(X_train, X_val, X_test):
+def transform_recordings(X_train, X_val, X_test, transform_function):
     """
     Normalize through padding and compute the spectrograms of train, validation and test recordings
     :param X_train: train recordings
     :param X_val: validation recordings
     :param X_test: test recordings
+    :param transform_function: whether to apply spectrogram or mfcc
     :return:
     """
-    print("compute_spectrograms >>>")
+    print("transform_recordings >>>")
     # In order to normalise the length of recordings we have to define the maximum length of the various recordings
     max_length_rec = max(map(np.shape, X_train + X_val + X_test))[0]
     print(max_length_rec)
@@ -317,9 +406,14 @@ def compute_spectrograms(X_train, X_val, X_test):
     X_val = pad_zeros(X_val, compute_max_rec_length=False, max_rec_length=max_length_rec)
     X_test = pad_zeros(X_test, compute_max_rec_length=False, max_rec_length=max_length_rec)
     print("Padding done")
-    # Now let's compute the spectrograms
-    X_train = [compute_spectrogram(x, normalize=True) for x in X_train]
-    X_val = [compute_spectrogram(x, normalize=True) for x in X_val]
-    X_test = [compute_spectrogram(x, normalize=True) for x in X_test]
-    print("compute_spectrograms <<<")
+    # Now let's transform our recordings the spectrograms
+    if transform_function == "spectrogram":
+        X_train = [compute_spectrogram(x, normalize=True) for x in X_train]
+        X_val = [compute_spectrogram(x, normalize=True) for x in X_val]
+        X_test = [compute_spectrogram(x, normalize=True) for x in X_test]
+    else:
+        X_train = [mfcc(x, flatten=False) for x in X_train]
+        X_val = [mfcc(x, flatten=False) for x in X_val]
+        X_test = [mfcc(x, flatten=False) for x in X_test]
+    print("transform_recordings <<<")
     return X_train, X_val, X_test
