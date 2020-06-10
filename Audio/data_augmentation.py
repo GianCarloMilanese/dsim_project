@@ -10,28 +10,69 @@ RATE = 8000
 
 
 def add_random_noise(audio_signal, mu=0, stdev=0.05):
+    """
+    Add random noise to the given track
+    :param audio_signal:
+    :param mu:
+    :param stdev:
+    :return:
+    """
     random_noise = np.random.normal(mu, stdev, len(audio_signal))
     return audio_signal + random_noise
 
 
 def augment_audio_with_random_noise(audio_signal, min_stdev, max_stdev, n):
+    """
+    Create n recordings with various levels of random noise
+    :param audio_signal: Audio track to augment
+    :param min_stdev: min standard deviation for adding noise
+    :param max_stdev: max standard deviation for adding noise
+    :param n: number of desired augmented recordings
+    :return:
+    """
     stdevs = np.linspace(min_stdev, max_stdev, n)
     augmented_noise_audio_tracks = [add_random_noise(audio_signal, 0, stdev) for stdev in stdevs]
     return augmented_noise_audio_tracks
 
 
 def change_pitch(audio_signal, sampling_rate, pitch_step):
+    """
+    Modify the pitch of the given recording
+    :param audio_signal:
+    :param sampling_rate:
+    :param pitch_step:
+    :return:
+    """
     audio_pitch_shift = librosa.effects.pitch_shift(audio_signal, sampling_rate, pitch_step)
     return audio_pitch_shift
 
 
 def augment_audio_with_pitch_shift(audio_signal, sampling_rate, min_pitch_shift, max_pitch_shift, n):
+    """
+    Create n recordings with various levels of pitch.
+    :param audio_signal: Audio track to augment
+    :param sampling_rate: sampling rate of input audio
+    :param min_pitch_shift: minimum pitch shift value
+    :param max_pitch_shift: maximum pitch shift value
+    :param n: number of desidered augmented recordings
+    :return:
+    """
     pitch_steps = np.linspace(min_pitch_shift, max_pitch_shift, n)
     augmented_pitch_shift_audio_tracks = [change_pitch(audio_signal, sampling_rate, step) for step in pitch_steps]
     return augmented_pitch_shift_audio_tracks
 
 
 def enrich_dataset(audio_dir, mode, n_noise, n_pitch, max_length=999999, store_tracks=False):
+    """
+    Augment all recordings in the target directory
+    :param audio_dir: path where audio tracks are stored
+    :param mode: whether to apply data augmentation strategies sequentially or in a combinatorial way
+    :param n_noise: number of "random noise" tracks to produce from one recording
+    :param n_pitch: number of "modified pitch" tracks to produce from one recording
+    :param max_length: maximum length of a recording should have in order to be considered
+    :param store_tracks: whether to store the final dataset (input tracks + augmented ones)
+    :return:
+    """
     print("enrich_dataset>>>")
     enriched_audio_tracks = {}
     for audio_fn in os.listdir(audio_dir):
@@ -75,6 +116,6 @@ def enrich_dataset(audio_dir, mode, n_noise, n_pitch, max_length=999999, store_t
                     enriched_audio_tracks[audio_fn]['pitch_noise'] = pitch_noise_tracks
     if store_tracks:
         import json
-        json.dump(enriched_audio_tracks, audio_dir+"augmented_tracks.json")
+        json.dump(enriched_audio_tracks, audio_dir + "augmented_tracks.json")
     print("enrich_dataset <<<")
     return enriched_audio_tracks
