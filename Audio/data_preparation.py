@@ -254,7 +254,7 @@ def transform_categorical_y(labels):
     label_6 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
     label_7 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
     target_names = [label_0, label_1, label_2, label_3, label_4, label_5, label_6, label_7]
-    return y, target_names
+    return enc, y, target_names
 
 
 def get_pattern_indexes(lst: List, pattern: str, split_index: int):
