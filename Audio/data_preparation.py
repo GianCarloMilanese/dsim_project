@@ -252,7 +252,7 @@ def transform_categorical_y(labels):
     label_4 = enc.inverse_transform(np.array([0, 0, 0, 0, 1, 0, 0, 0]).reshape(1, -1))[0][0]
     label_5 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 1, 0, 0]).reshape(1, -1))[0][0]
     label_6 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
-    label_7 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 1, 0]).reshape(1, -1))[0][0]
+    label_7 = enc.inverse_transform(np.array([0, 0, 0, 0, 0, 0, 0, 1]).reshape(1, -1))[0][0]
     target_names = [label_0, label_1, label_2, label_3, label_4, label_5, label_6, label_7]
     return enc, y, target_names
 
