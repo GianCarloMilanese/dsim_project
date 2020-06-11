@@ -61,13 +61,14 @@ def preprocess_face(gray, mask, fa, face=None):
     return gray
 
 
-def preprocess_img(img, mask, new_width, detector, fa):
+def preprocess_img(img, mask, new_width, detector, fa, skip = False):
     """
     Should be applied on an already cropped picture,
     since the saved pictures are already cropped
 
     detector: dlib detector
     fa: imutils facealigner
+    skip: return None if no face is detected
     """
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = imutils.resize(gray, width=new_width)
@@ -92,6 +93,8 @@ def preprocess_img(img, mask, new_width, detector, fa):
     face = None
     if len(faces) > 0:
         face = faces[0]
+    elif skip:
+        return None
 
     gray = preprocess_face(gray, mask, fa, face)
     return gray
