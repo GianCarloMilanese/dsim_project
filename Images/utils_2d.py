@@ -15,7 +15,9 @@ import json
 
 def take_bgr_picture():
     """
-    Take a single picture, and return it as BGR
+    Take a single picture
+
+    :return: BGR image
     """
     cap = cv.VideoCapture(0)
     result, img = cap.read()
@@ -26,14 +28,20 @@ def take_bgr_picture():
 
 def take_rgb_picture():
     """
-    Take a single picture, and return it as RGB
+    Take a single picture
+
+    :return: RGB image
     """
     return rgb_bgr_switch(take_bgr_picture())
 
 
 def rgb_bgr_switch(img):
     """
-    Convert from RGB to BGR (and back)
+    Switch between RGB and BGR
+
+    :img: RGB/BGR image
+
+    :return: BGR image if :img: is RGB, and viceversa
     """
     return img[:, :, ::-1]
 
@@ -41,7 +49,9 @@ def rgb_bgr_switch(img):
 def create_mask(a=92, b=112, n=224, r=112):
     """
     Create ellipsoidal mask inside a square of size n*n.
-    Used in preprocessing to hide background
+    Used in images preprocessing to hide background
+
+    :return: n*n array
     """
     y, x = np.ogrid[-a:n-a, -b:n-b]
     mask = x*x + y*y/2 <= r*r/2
@@ -50,7 +60,21 @@ def create_mask(a=92, b=112, n=224, r=112):
 
 def preprocess_face(gray, mask, fa, face=None):
     """
-    This function definition is a little wonky
+    Preprocess a face in a greyscale image.
+
+    Operations:
+     - align face (if :face: is not None), which
+      return a cropped face
+     - equalize the image's histogram
+     - hide the background
+
+    :gray: grayscale image
+    :mask: mask that will be used to hide background
+    :fa: FaceAligner object from imutils.face_utils
+    :face: a face found by a dlib detector. If None, no
+           alignment is performed
+
+    :return: grayscale image
     """
     if face is not None:
         gray = fa.align(gray, gray, face)
@@ -61,14 +85,22 @@ def preprocess_face(gray, mask, fa, face=None):
     return gray
 
 
-def preprocess_img(img, mask, new_width, detector, fa, skip = False):
+def preprocess_img(img, mask, new_width, detector, fa, skip=False):
     """
-    Should be applied on an already cropped picture,
-    since the saved pictures are already cropped
+    Preprocess a BGR image containing a face (if there are more
+    faces, only one is taken into account)
 
-    detector: dlib detector
-    fa: imutils facealigner
-    skip: return None if no face is detected
+    :img: a BGR image
+    :mask: mask that is used to hide the background
+    :detector: dlib face detector
+    :fa: FaceAligner object from imutils.face_utils
+    :new_width: the picture is resized to match this width
+                (the smaller the image, the faster the detector)
+    :skip: return None if no face is detected (insted of preprocessing the
+           picture with the function preprocess_face anyway)
+
+    :return: grayscale picture where the face is aligned,
+              the histogram equalized, the background hidden by the mask
     """
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = imutils.resize(gray, width=new_width)
@@ -106,7 +138,21 @@ def pictures_train_test_val_split(input_dir='pictures/',
                                   classes=None, numpy_random_seed=1,
                                   equal_size=True, verbose=False):
     """
-    Split pictures inside `pictures` folder in test/val/train folders.
+    Split picture classes/folders contained inside :input_dir: in
+    train/val/test folders contained in :output_dir:
+
+    :input_dir: a folder containing pictures split in different classes
+    :output_dir: folder that will contain the folders split into further
+                 train/val/test/folders
+    :val_ratio: size of the validation set (between 0 and 1)
+    :test_ratio: size of the test set (between 0 and 1)
+    :classes: specify which classes to take into account (if None, all 
+              classes inside :input_dir: are considered)
+    :numpy_random_seed: seed for numpy random number generator
+    :equal_size: if True, each class will have train/val/test folders
+                 of equal size
+    :verbose: print some information during execution
+
     """
     if classes is None:
         classes = os.listdir(input_dir)
@@ -166,6 +212,14 @@ def pictures_train_test_val_split(input_dir='pictures/',
 
 
 def get_left_eye(shape, img):
+    """
+    Get left eye from an image
+
+    :shape: shape returned by dlib predictor
+    :img: image containing the eye from which the shape was obtained
+
+    :return: array containing the left eye
+    """
 
     x1 = shape.part(36).x
     x2 = shape.part(39).x
@@ -176,6 +230,14 @@ def get_left_eye(shape, img):
 
 
 def get_right_eye(shape, img):
+    """
+    Get right eye from an image
+
+    :shape: shape returned by dlib predictor
+    :img: image containing the eye from which the shape was obtained
+
+    :return: array containing the right eye
+    """
 
     x3 = shape.part(42).x
     x4 = shape.part(45).x
@@ -186,14 +248,29 @@ def get_right_eye(shape, img):
 
 
 def get_eyes(shape, img):
+    """
+    Get eyes from an image
+
+    :shape: shape returned by dlib predictor
+    :img: image containing the eyes from which the shape was obtained
+
+    :return: arrays containing the left and right eyes
+    """
 
     left_eye = get_left_eye(shape, img)
     right_eye = get_right_eye(shape, img)
 
     return left_eye, right_eye
 
-
 def plot_eyes(img, faces, predictor, gray=None):
+    """
+    Plot :img:, its grayscale version, and the eyes detected with dlib
+
+    :img: a BGR image
+    :faces: faces detected with dlib
+    :predictor: dlib predictor
+    :gray: the grayscale image used by the dlib predictor. (Can be None)
+    """
     if gray is None:
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     if len(faces) > 0:
@@ -210,12 +287,22 @@ def plot_eyes(img, faces, predictor, gray=None):
 
 
 def load_model(model_number, models_dir="models"):
+    """
+    Load model and relative info for Images section
+
+    :model_number: The number of the model
+    :models_dir:   The directory containing the models
+
+    :return: the loaded keras model, its class labels and
+              the function needed to preprocess pictures before passing
+              them to the model
+    """
     import keras
     model = keras.models.load_model(f"./{models_dir}/{model_number}_model.h5")
     with open(f"{models_dir}/{model_number}_model.json") as jf:
         json_file = json.load(jf)
 
-        # I didn't save the "class_indices" field for some models...
+    # I didn't save the "class_indices" field for some models...
     if "class_indices" not in json_file:
         if model.output_shape[1] == 8:
             labels = np.array(["alessandro", "alinda", "cami", "gian",
@@ -246,8 +333,13 @@ def load_model(model_number, models_dir="models"):
 def find_last_filename_id(filenames):
     """
     Find last filename id from a list of filenames
-    
-    An id is, e.g., the number "123" in the filename "some/directory/gian_123.png"
+
+    An id is, e.g., the number "123" in the filename 
+        "some/directory/gian_123.png"
+
+    :filenames: list of filenames
+
+    :return: highest id in :filenames:
     """
     if len(filenames) == 0:
         latest_picture = -1
@@ -255,4 +347,3 @@ def find_last_filename_id(filenames):
         latest_picture = max(
             [int(filenames[i].split(".")[0].split("_")[1]) for i in range(len(filenames))])
     return latest_picture
- 
