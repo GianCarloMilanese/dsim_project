@@ -273,7 +273,8 @@ def split_and_augment_dataset(audio_dir: str,
                               y_type: str,
                               n_category_audio_to_pick_test: int,
                               include_pitch: bool,
-                              max_length: int):
+                              max_length: int,
+                              load_stored_augm_recs: bool):
     """
     Augment and split in train, validation and test the given recordings
     :param audio_dir: path where the recordings of interest are stored
@@ -284,11 +285,16 @@ def split_and_augment_dataset(audio_dir: str,
     :return:
     """
     print("split_and_augment_dataset >>>")
-    augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
+    if load_stored_augm_recs:
+        augmented_tracks = dict(np.load(audio_dir + "augmented_tracks.npz", allow_pickle=True))
+        #print(list(augmented_tracks.keys()))
+    else:
+        augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
                                                         mode="normal",
                                                         n_noise=5,
                                                         n_pitch=5,
-                                                        max_length=max_length)
+                                                        max_length=max_length,
+                                                        store_tracks=True)
     if y_type == "speakers_us":
         categories = ['_gian_', '_alinda_', '_khaled_', '_ale_']
         # Used later on for getting y label
@@ -348,6 +354,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
                                  n_category_test: int,
                                  include_pitch: bool,
                                  max_length: int,
+                                 load_stored_augm_recs: bool,
                                  transform_function="spectrogram"):
     """
     Augment, split in train-val-test and compute spectrograms of the given recordings
@@ -371,7 +378,8 @@ def prepare_augmented_recordings(audio_dirs: List[str],
             y_type[i],
             n_category_test,
             include_pitch,
-            max_length)
+            max_length,
+            load_stored_augm_recs)
         X_train = X_train + train_recordings
         y_train = y_train + train_labels
         X_val = X_val + val_recordings

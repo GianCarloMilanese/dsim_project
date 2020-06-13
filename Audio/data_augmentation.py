@@ -1,6 +1,7 @@
 import numpy as np
 import librosa
 import os
+import json
 
 MIN_STDEV = 0.001
 MAX_STDEV = 0.05
@@ -115,7 +116,6 @@ def enrich_dataset(audio_dir, mode, n_noise, n_pitch, max_length=999999, store_t
                     # Add the tracks enriched with pitch shift to the current list
                     enriched_audio_tracks[audio_fn]['pitch_noise'] = pitch_noise_tracks
     if store_tracks:
-        import json
-        json.dump(enriched_audio_tracks, audio_dir + "augmented_tracks.json")
+        np.savez(audio_dir + "augmented_tracks.npz", **enriched_audio_tracks)
     print("enrich_dataset <<<")
     return enriched_audio_tracks
