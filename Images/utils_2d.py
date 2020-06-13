@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# TODO:
-# - Add docstrings
-
 import os
 import numpy as np
 import shutil
@@ -105,22 +102,6 @@ def preprocess_img(img, mask, new_width, detector, fa, skip=False):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = imutils.resize(gray, width=new_width)
     faces = detector(gray, 2)
-
-    # # Old version, saving because who knows
-    # if len(faces) > 0:
-    #     # if a face is detected, align it
-    #     face = faces[0]
-    #     # (x, y, w, h) = rect_to_bb(face)
-    #     gray = fa.align(gray, gray, face)
-    # else:
-    #     # otherwise, we know it's there, so
-    #     # just resize it
-    #     gray = cv.resize(gray, (224, 224))
-    # # equalize histogram
-    # gray = cv.equalizeHist(gray)
-
-    # # apply mask
-    # gray[~mask] = 0
 
     face = None
     if len(faces) > 0:
