@@ -223,17 +223,34 @@ def split_train_test_nn(X, y, number_mode=True):
     return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
 
 
-def prepare_data_nn(X_test, X_train, X_val, number_mode, y_test, y_train, y_val):
+def prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode):
+    """
+    Transform recordings, in MFCC or spectrograms form, and their label for NN training
+    :param X_train:
+    :param X_val:
+    :param X_test:
+    :param y_train:
+    :param y_val:
+    :param y_test:
+    :param number_mode:
+    :return:
+    """
     # Change shape of X for model training purpose
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], X_train.shape[2], 1)
     X_val = X_val.reshape(X_val.shape[0], X_val.shape[1], X_val.shape[2], 1)
     X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], X_test.shape[2], 1)
     input_shape = (X_train.shape[1], X_train.shape[2], 1)
+    target_names = []
     if number_mode:
         y_train = keras.utils.to_categorical(y_train, 10)
         y_val = keras.utils.to_categorical(y_val, 10)
         y_test = keras.utils.to_categorical(y_test, 10)
-    return X_test, X_train, X_val, input_shape, y_test, y_train, y_val
+    else:
+        enc, y_train, target_names = transform_categorical_y(y_train)
+        y_val = enc.fit_transform(np.array(y_val).reshape(-1, 1)).toarray()
+        y_test = enc.fit_transform(np.array(y_test).reshape(-1, 1)).toarray()
+
+    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape, target_names
 
 
 def transform_categorical_y(labels):
@@ -287,7 +304,6 @@ def split_and_augment_dataset(audio_dir: str,
     print("split_and_augment_dataset >>>")
     if load_stored_augm_recs:
         augmented_tracks = dict(np.load(audio_dir + "augmented_tracks.npz", allow_pickle=True))
-        #print(list(augmented_tracks.keys()))
     else:
         augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
                                                         mode="normal",
@@ -425,3 +441,61 @@ def transform_recordings(X_train, X_val, X_test, transform_function):
         X_test = [mfcc(x, flatten=False) for x in X_test]
     print("transform_recordings <<<")
     return X_train, X_val, X_test
+
+
+def balanced_train_val_test_split(X, y, train_size=0.6):
+    X_train = []
+    X_val = []
+    X_test = []
+    y_train = []
+    y_val = []
+    y_test = []
+    # Find out unique values and their occurences
+    unique, counts = np.unique(y, return_counts=True)
+    # Occurences of the least frequent clas
+    min_len = np.min(counts)
+    # How many samples should train, val and test have:
+    train_freq = int(min_len * train_size)
+    val_freq = (min_len - train_freq) // 2
+    test_freq = min_len - train_freq - val_freq
+    print(train_freq, val_freq, test_freq)
+    for c in unique:
+        print(c)
+        current_indexes = np.where(y == c)[0]
+        np.random.shuffle(current_indexes)
+        train_indexes = current_indexes[0:train_freq]
+        val_indexes = current_indexes[train_freq:train_freq + val_freq]
+        test_indexes = current_indexes[train_freq + val_freq:]
+        X_train = X_train + [X[i] for i in train_indexes]
+        y_train = y_train + [y[i] for i in train_indexes]
+        X_val = X_val + [X[i] for i in val_indexes]
+        y_val = y_val + [y[i] for i in val_indexes]
+        X_test = X_test + [X[i] for i in test_indexes]
+        y_test = y_test + [y[i] for i in test_indexes]
+    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val), np.array(X_test), np.array(y_test)
+
+
+def balanced_train_val_split(X, y, train_size=0.75):
+    X_train = []
+    X_val = []
+    y_val = []
+    y_train = []
+    # Find out unique values and their occurences
+    unique, counts = np.unique(y, return_counts=True)
+    # Occurences of the least frequent class
+    min_len = np.min(counts)
+    # How many samples should train, val and test have:
+    train_freq = int(min_len * train_size)
+    val_freq = min_len - train_freq
+    print(train_freq, val_freq)
+    for c in unique:
+        print(c)
+        current_indexes = np.where(y == c)[0]
+        np.random.shuffle(current_indexes)
+        train_indexes = current_indexes[0:train_freq]
+        val_indexes = current_indexes[train_freq:train_freq + val_freq]
+        X_train = X_train + [X[i] for i in train_indexes]
+        y_train = y_train + [y[i] for i in train_indexes]
+        X_val = X_val + [X[i] for i in val_indexes]
+        y_val = y_val + [y[i] for i in val_indexes]
+    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val)
