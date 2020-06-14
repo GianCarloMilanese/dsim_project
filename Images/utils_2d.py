@@ -55,7 +55,7 @@ def create_mask(a=92, b=112, n=224, r=112):
     return mask
 
 
-def preprocess_face(gray, mask, fa, face=None):
+def preprocess_face(gray, mask, fa, face=None, equalize=False):
     """
     Preprocess a face in a greyscale image.
 
@@ -77,7 +77,8 @@ def preprocess_face(gray, mask, fa, face=None):
         gray = fa.align(gray, gray, face)
     else:
         gray = cv.resize(gray, (224, 224))
-    gray = cv.equalizeHist(gray)
+    if equalize:
+        gray = cv.equalizeHist(gray)
     gray[~mask] = 0
     return gray
 
@@ -100,6 +101,7 @@ def preprocess_img(img, mask, new_width, detector, fa, skip=False):
               the histogram equalized, the background hidden by the mask
     """
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = cv.equalizeHist(gray)
     gray = imutils.resize(gray, width=new_width)
     faces = detector(gray, 2)
 
@@ -109,7 +111,7 @@ def preprocess_img(img, mask, new_width, detector, fa, skip=False):
     elif skip:
         return None
 
-    gray = preprocess_face(gray, mask, fa, face)
+    gray = preprocess_face(gray, mask, fa, face, equalize=False)
     return gray
 
 
