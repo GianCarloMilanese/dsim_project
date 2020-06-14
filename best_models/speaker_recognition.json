@@ -1,8 +1,0 @@
-{
-"type" : "spectrogram",
-"class_indices" : ["ale", "alinda", "gian",
-    "jackson", "khaled", "nicolas",
-    "theo", "yweweler"],
-"target" : "speakers",
-"name" : "Spectrogram-based speaker classifier"
-}
