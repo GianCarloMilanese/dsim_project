@@ -1,5 +1,4 @@
 # Demos with the last models
-
 ## Alessandro
 
 **Alessandro without glasses. Best Model: Basic model  with ~91% final accuracy**
@@ -53,27 +52,27 @@ Luca's demos are interesting as the model was trained exclusively on pictures of
 
 **Luca almost shaved. Best Model: basic model with ~73% final accuracy**
 
-![Luca almost shaving](gifs/comparisons/30_comparison_luca6.gif)
+![Luca almost shaved](gifs/comparisons/30_comparison_luca6.gif)
 
 **Luca shaved. Best Model: basic model with ~89% final accuracy**
 
-![Luca shaving](gifs/comparisons/30_comparison_luca7.gif)
+![Luca shaved](gifs/comparisons/30_comparison_luca7.gif)
 
 ## Mamma
 
 **Mamma without glasses. Best Model: Doublesteps with ~89% final accuracy**
 
-![Mamma](gifs/comparisons/30_comparison_mamma1.gif)
+![Mamma witohut glasses](gifs/comparisons/30_comparison_mamma1.gif)
 
 **Mamma with glasses. Best Model: Basic model with ~82% final accuracy**
 
-![Mamma](gifs/comparisons/30_comparison_mamma2.gif)
+![Mamma with glasses](gifs/comparisons/30_comparison_mamma2.gif)
 
 ## Papi
 
 **Papi without glasses. Best Model: Maxpool with ~87% final accuracy**
 
-![Papi with glasses](gifs/comparisons/30_comparison_papi3.gif)
+![Papi without glasses](gifs/comparisons/30_comparison_papi3.gif)
 
 **Papi with glasses. Best Model: Maxpool with ~95% final accuracy**
 
@@ -91,7 +90,7 @@ Basic convolutional architecture, first model trained on heavily resized picture
 
 **Flaw: Gian + hair on forehad = Mamma**
 
-![Ensemble](gifs/20_1.gif)
+![Flaw](gifs/20_1.gif)
 
 ## Model N. 17
 
@@ -99,7 +98,4 @@ Model trained on fewer classes (Alinda, Cami, Gian, Khaled, Mamma, Papi)
 
 **Prediction while walking under different lighting conditions**
 
-
-![Ensemble](gifs/17_1.gif)
-
-
+![Walking](gifs/17_1.gif)
