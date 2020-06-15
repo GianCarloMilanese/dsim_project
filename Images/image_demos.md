@@ -11,9 +11,10 @@
 
 ## Alinda
 
-**Best Model: Doublesteps with ~93% final accuracy**
+**Best Model: Doublesteps with ~88% final accuracy**
 
-![Alinda](gifs/comparisons/30_comparison_alinda3.gif)
+![Alinda](gifs/comparisons/30_comparison_alinda4.gif)
+
 
 ## Camilla
 
