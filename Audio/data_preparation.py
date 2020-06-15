@@ -123,42 +123,6 @@ def compute_spectrogram(audio, rate=8000, normalize=False):
     return spectrogram
 
 
-"""
-def split_train_test_baseline_spectrograms(X, y):
-    \"""
-    Return Train (60%), Validation(20%) and Test(20%) X and Y already reshaped for sklearn classifiers
-    :param X: Original features
-    :param y: Original labels
-    :return:
-    \"""
-    nsamples, nx, ny = X.shape
-    X_2d = X.reshape((nsamples, nx * ny))
-    # Get the training set : 60% of original data
-    X_train, X_test_val, y_train, y_test_val = train_test_split(X_2d, y, test_size=0.4, random_state=1)
-    # Get validation and test set, both 20% of original data
-    X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
-    return X_train, X_val, X_test, y_train, y_val, y_test
-"""
-
-"""
-def split_train_test_nn(X, y, number_mode=True):
-    \"""
-    Return Train (60%), Validation(20%) and Test(20%) X and Y already reshaped for Keras models
-    :param X: Original features
-    :param y: Original labels
-    :param number_mode: whether y is in the digit domain or not
-    :return:
-    \"""
-    # Get the training set: 60% of original data
-    X_train, X_test_val, y_train, y_test_val = train_test_split(X, y, test_size=0.4, random_state=1)
-    # Get val and test set, both 20% of original data
-    X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
-    X_test, X_train, X_val, input_shape, y_test, y_train, y_val = prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode)
-    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
-
-"""
-
-
 def prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode):
     """
     Transform recordings, in MFCC or spectrograms form, and their label for NN training
