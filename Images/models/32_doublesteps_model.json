@@ -1,0 +1,1 @@
+{"mask": true, "model_n": 32, "featurewise_center": false, "featurewise_std": false, "class_indices": ["alessandro", "alinda", "cami", "gian", "khaled", "luca", "mamma", "papi"], "description": "Base model + maxpool + double steps per epoch, new preprocessing order, new_width=50"}

@@ -1,0 +1,1 @@
+{"mask": true, "model_n": 30, "featurewise_center": false, "featurewise_std": false, "class_indices": ["alessandro", "alinda", "cami", "gian", "khaled", "luca", "mamma", "papi"], "description": "Base model, new preprocessing steps order, new_width = 50"}
