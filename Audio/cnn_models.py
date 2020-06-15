@@ -12,10 +12,10 @@ def simple_model(input_shape, num_classes, batch_normalisation=False):
         model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(64, activation='relu'))
     if batch_normalisation:
         model.add(BatchNormalization())
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.25))
     model.add(Dense(num_classes, activation='softmax'))
     model.compile(loss=tensorflow.keras.losses.categorical_crossentropy,
                   optimizer=tensorflow.keras.optimizers.SGD(nesterov=True),
@@ -49,18 +49,3 @@ def paper_architecture(num_classes, input_shape, batch_normalisation=False):
     print(model.summary())
     return model
 
-
-def custom_cnn(num_classes, input_shape):
-    model = Sequential()
-    model.add(Conv2D(32, kernel_size=(4, 4), strides=(2, 2), activation='relu', input_shape=input_shape))
-    model.add(Conv2D(64, kernel_size=(4, 4), strides=(2, 2), activation='relu', input_shape=input_shape))
-    model.add(MaxPooling2D(pool_size=(4, 4), strides=(2, 2)))
-    model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.25))
-    model.add(Dense(num_classes, activation='softmax'))
-    model.compile(loss=tensorflow.keras.losses.categorical_crossentropy,
-                  optimizer=tensorflow.keras.optimizers.SGD(nesterov=True),
-                  metrics=['accuracy'])
-    print(model.summary())
-    return model

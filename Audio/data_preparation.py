@@ -34,63 +34,7 @@ def load_recordings(paths=["recordings"], label_type="number", sr=RATE):
     return np.array(res)
 
 
-def aavg(input):
-    """
-    Compute average value of the input signal
-    :param input:
-    :return:
-    """
-    return np.mean(np.abs(input), keepdims=True)
-
-
-def sdev(input):
-    """
-    Compute standard deviation of the input signal
-    :param input:
-    :return:
-    """
-    return np.std(input, keepdims=True)
-
-
-def energy(input):
-    """
-    Compute energy of the input signal
-    :param input:
-    :return:
-    """
-    return np.sum((input * 1.0) ** 2, keepdims=True)
-
-
-def zcr(y):
-    """
-    Compute zero crossing rate of the input signal
-    :param y:
-    :return:
-    """
-    # segnale traslato di un'unità
-    ty = np.roll(y, shift=-1)
-
-    # confronto punto a punto del segno di y e ty
-    d = np.sign(y[:-1]) - np.sign(ty[:-1])
-    # [:-1] perché l'ultimo elemento di ty è uguale al primo elemento di y
-
-    # siamo interessati a quando d è diverso da 0, cioè quando il segnale cambia segno
-    dneq0 = np.where(d != 0)[0]
-
-    # calcoliamo quante volte il segnale cambia segno e restituiamo il valore
-    return dneq0.shape
-
-
-def combo(track):
-    """
-    Compute and combine standard deviation, average, energy, zero crossing rate and mfcc of the input signal
-    :param track:
-    :return:
-    """
-    return np.concatenate((sdev(track), aavg(track), energy(track), zcr(track), mfcc(track)))
-
-
-def mfcc(track, rate=8000, min_len=40, sampling=1, n_mfcc=40, flatten=True):
+def mfcc(track, rate=8000, sampling=1, n_mfcc=20, flatten=True):
     """
     Compute MFCC of the given track
     :param track: input audio
@@ -105,9 +49,6 @@ def mfcc(track, rate=8000, min_len=40, sampling=1, n_mfcc=40, flatten=True):
     signal = track[::sampling]
     # Calcola coefficienti MFCC
     mfcc_coefs = librosa.feature.mfcc(signal*1.0, sr=int(rate/sampling), n_mfcc=n_mfcc)
-    # Applica eventuali zeri aggiuntivi per raggiungere una lunghezza fissa
-    pad_width = min_len - mfcc_coefs.shape[1]
-    mfcc_coefs = np.pad(mfcc_coefs, pad_width=((0, 0), (0, pad_width)), mode='constant')
     if flatten:
         # Appiattisci rappresentazione per uso con SVM
         mfcc_coefs = mfcc_coefs.flatten()
@@ -144,11 +85,9 @@ def pad_zeros(recordings, compute_max_rec_length=True, max_rec_length=0):
     :param max_rec_length:
     :return:
     """
-    print("pad_zeros >>>")
     if compute_max_rec_length:
         max_rec_length = max(map(np.shape, recordings))[0]
     res = [padding(max_rec_length, rec) for rec in recordings]
-    print("pad_zeros <<<")
     return np.array(res)
 
 
@@ -169,34 +108,29 @@ def padding(max_rec_length, rec):
         return rec
 
 
-def compute_spectrogram(audio, rate=8000, n_fft=1024, hop_length=160, n_mels=128, normalize=False):
+def compute_spectrogram(audio, rate=8000, normalize=False):
     """
     Compute spectrogram of the given recording
     :param audio: Input audio track
     :param rate: sampling rate of the input audio track
-    :param n_fft: length of the FFT window
-    :param hop_length: number of samples between successive frames
-    :param n_mels: number of Mel bands to generate
     :param normalize: whether to apply dynamic range compression of the spectrograms or not
     :return:
     """
     spectrogram = librosa.feature.melspectrogram(y=np.array(audio),
-                                                 sr=rate,
-                                                 n_fft=n_fft,
-                                                 hop_length=hop_length,
-                                                 n_mels=n_mels)
+                                                 sr=rate)
     if normalize:
         spectrogram = np.log10(1000 * spectrogram + 1)
     return spectrogram
 
 
+"""
 def split_train_test_baseline_spectrograms(X, y):
-    """
+    \"""
     Return Train (60%), Validation(20%) and Test(20%) X and Y already reshaped for sklearn classifiers
     :param X: Original features
     :param y: Original labels
     :return:
-    """
+    \"""
     nsamples, nx, ny = X.shape
     X_2d = X.reshape((nsamples, nx * ny))
     # Get the training set : 60% of original data
@@ -204,23 +138,25 @@ def split_train_test_baseline_spectrograms(X, y):
     # Get validation and test set, both 20% of original data
     X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
     return X_train, X_val, X_test, y_train, y_val, y_test
+"""
 
-
+"""
 def split_train_test_nn(X, y, number_mode=True):
-    """
+    \"""
     Return Train (60%), Validation(20%) and Test(20%) X and Y already reshaped for Keras models
     :param X: Original features
     :param y: Original labels
     :param number_mode: whether y is in the digit domain or not
     :return:
-    """
+    \"""
     # Get the training set: 60% of original data
     X_train, X_test_val, y_train, y_test_val = train_test_split(X, y, test_size=0.4, random_state=1)
     # Get val and test set, both 20% of original data
     X_val, X_test, y_val, y_test = train_test_split(X_test_val, y_test_val, test_size=0.5, random_state=1)
-    X_test, X_train, X_val, input_shape, y_test, y_train, y_val = prepare_data_nn(X_test, X_train, X_val, number_mode,
-                                                                                  y_test, y_train, y_val)
+    X_test, X_train, X_val, input_shape, y_test, y_train, y_val = prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode)
     return X_train, X_val, X_test, y_train, y_val, y_test, input_shape
+
+"""
 
 
 def prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode):
@@ -249,8 +185,9 @@ def prepare_data_nn(X_train, X_val, X_test, y_train, y_val, y_test, number_mode)
         enc, y_train, target_names = transform_categorical_y(y_train)
         y_val = enc.fit_transform(np.array(y_val).reshape(-1, 1)).toarray()
         y_test = enc.fit_transform(np.array(y_test).reshape(-1, 1)).toarray()
-
-    return X_train, X_val, X_test, y_train, y_val, y_test, input_shape, target_names
+    X_data = [np.array(X_train), np.array(X_val), np.array(X_test)]
+    y_data = [np.array(y_train), np.array(y_val), np.array(y_test)]
+    return X_data, y_data, input_shape, target_names
 
 
 def transform_categorical_y(labels):
@@ -291,7 +228,7 @@ def split_and_augment_dataset(audio_dir: str,
                               n_category_audio_to_pick_test: int,
                               include_pitch: bool,
                               max_length: int,
-                              load_stored_augm_recs: bool):
+                              recordings_made_by_us: bool):
     """
     Augment and split in train, validation and test the given recordings
     :param audio_dir: path where the recordings of interest are stored
@@ -299,28 +236,33 @@ def split_and_augment_dataset(audio_dir: str,
     :param n_category_audio_to_pick_test: how many sample, for each unique Y value, should be put in the test set
     :param include_pitch: whether to include audio with modified pitch or not
     :param max_length: maximum length a given recording should have in order to be included
+    :param recordings_made_by_us: whether the recs are made by us or not
     :return:
     """
     print("split_and_augment_dataset >>>")
-    if load_stored_augm_recs:
-        augmented_tracks = dict(np.load(audio_dir + "augmented_tracks.npz", allow_pickle=True))
-    else:
-        augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
-                                                        mode="normal",
-                                                        n_noise=5,
-                                                        n_pitch=5,
-                                                        max_length=max_length,
-                                                        store_tracks=True)
+    n_noise = 5
+    n_pitch = 0
     if y_type == "speakers_us":
         categories = ['_gian_', '_alinda_', '_khaled_', '_ale_']
         # Used later on for getting y label
         split_index = 1
+        # Double noise augmentation because there are less recordings
+        n_noise = 10
+        n_pitch = 0
     elif y_type == "speakers_default":
         categories = ['jackson', 'nicolas', 'theo', 'yweweler']
         split_index = 1
     else:
         categories = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         split_index = 0
+        n_pitch = 5
+    augmented_tracks = data_augmentation.enrich_dataset(audio_dir,
+                                                        mode="normal",
+                                                        n_noise=n_noise,
+                                                        n_pitch=n_pitch,
+                                                        recordings_made_by_us=recordings_made_by_us,
+                                                        max_length=max_length)
+
     all_keys = [k for k in augmented_tracks.keys()]
     test_labels = []
     # Get the list of recordings name that will compose our test set
@@ -370,7 +312,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
                                  n_category_test: int,
                                  include_pitch: bool,
                                  max_length: int,
-                                 load_stored_augm_recs: bool,
+                                 recordings_source: List[bool],
                                  transform_function="spectrogram"):
     """
     Augment, split in train-val-test and compute spectrograms of the given recordings
@@ -379,6 +321,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     :param n_category_test: how many sample, for each unique Y value, should be put in the test set
     :param include_pitch: whether to include audio with modified pitch or not
     :param max_length: maximum length a given recording should have in order to be included
+    :param recordings_source: whether the current recordings are made by us(useful for setting data augmentation params)
     :param transform_function: whether to transform recordings using MFCC or spectrograms
     :return:
     """
@@ -395,7 +338,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
             n_category_test,
             include_pitch,
             max_length,
-            load_stored_augm_recs)
+            recordings_source[i])
         X_train = X_train + train_recordings
         y_train = y_train + train_labels
         X_val = X_val + val_recordings
@@ -408,9 +351,10 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     y_val = [np.array(x) for x in y_val]
     X_test = [np.array(x) for x in X_test]
     y_test = [np.array(x) for x in y_test]
-    print("conversion_done!")
     X_train, X_val, X_test = transform_recordings(X_train, X_val, X_test, transform_function)
-    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val), np.array(X_test), np.array(y_test)
+    X_data = [np.array(X_train), np.array(X_val), np.array(X_test)]
+    y_data = [np.array(y_train),  np.array(y_val), np.array(y_test)]
+    return X_data, y_data
 
 
 def transform_recordings(X_train, X_val, X_test, transform_function):
@@ -425,11 +369,9 @@ def transform_recordings(X_train, X_val, X_test, transform_function):
     print("transform_recordings >>>")
     # In order to normalise the length of recordings we have to define the maximum length of the various recordings
     max_length_rec = max(map(np.shape, X_train + X_val + X_test))[0]
-    print(max_length_rec)
     X_train = pad_zeros(X_train, compute_max_rec_length=False, max_rec_length=max_length_rec)
     X_val = pad_zeros(X_val, compute_max_rec_length=False, max_rec_length=max_length_rec)
     X_test = pad_zeros(X_test, compute_max_rec_length=False, max_rec_length=max_length_rec)
-    print("Padding done")
     # Now let's transform our recordings the spectrograms
     if transform_function == "spectrogram":
         X_train = [compute_spectrogram(x, normalize=True) for x in X_train]
@@ -458,9 +400,7 @@ def balanced_train_val_test_split(X, y, train_size=0.6):
     train_freq = int(min_len * train_size)
     val_freq = (min_len - train_freq) // 2
     test_freq = min_len - train_freq - val_freq
-    print(train_freq, val_freq, test_freq)
     for c in unique:
-        print(c)
         current_indexes = np.where(y == c)[0]
         np.random.shuffle(current_indexes)
         train_indexes = current_indexes[0:train_freq]
@@ -472,7 +412,9 @@ def balanced_train_val_test_split(X, y, train_size=0.6):
         y_val = y_val + [y[i] for i in val_indexes]
         X_test = X_test + [X[i] for i in test_indexes]
         y_test = y_test + [y[i] for i in test_indexes]
-    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val), np.array(X_test), np.array(y_test)
+    X_data = [np.array(X_train), np.array(X_val), np.array(X_test)]
+    y_data = [np.array(y_train), np.array(y_val), np.array(y_test)]
+    return X_data, y_data
 
 
 def balanced_train_val_split(X, y, train_size=0.75):
@@ -498,4 +440,6 @@ def balanced_train_val_split(X, y, train_size=0.75):
         y_train = y_train + [y[i] for i in train_indexes]
         X_val = X_val + [X[i] for i in val_indexes]
         y_val = y_val + [y[i] for i in val_indexes]
-    return np.array(X_train), np.array(y_train), np.array(X_val), np.array(y_val)
+    X_data = [np.array(X_train), np.array(X_val)]
+    y_data = [np.array(y_train), np.array(y_val)]
+    return X_data, y_data
