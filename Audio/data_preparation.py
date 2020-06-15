@@ -48,7 +48,7 @@ def mfcc(track, rate=8000, sampling=1, n_mfcc=20, flatten=True):
     # Campiona i valori
     signal = track[::sampling]
     # Calcola coefficienti MFCC
-    mfcc_coefs = librosa.feature.mfcc(signal*1.0, sr=int(rate/sampling), n_mfcc=n_mfcc)
+    mfcc_coefs = librosa.feature.mfcc(signal * 1.0, sr=int(rate / sampling), n_mfcc=n_mfcc)
     if flatten:
         # Appiattisci rappresentazione per uso con SVM
         mfcc_coefs = mfcc_coefs.flatten()
@@ -108,16 +108,23 @@ def padding(max_rec_length, rec):
         return rec
 
 
-def compute_spectrogram(audio, rate=8000, normalize=False):
+def compute_spectrogram(audio, rate=8000, normalize=False, paper_data=False):
     """
     Compute spectrogram of the given recording
     :param audio: Input audio track
     :param rate: sampling rate of the input audio track
     :param normalize: whether to apply dynamic range compression of the spectrograms or not
+    :param paper_data: whether to trasform the input recordings according to the paper specs
     :return:
     """
-    spectrogram = librosa.feature.melspectrogram(y=np.array(audio),
-                                                 sr=rate)
+    if paper_data:
+        spectrogram = librosa.feature.melspectrogram(y=np.array(audio),
+                                                     sr=rate,
+                                                     n_fft=1024,
+                                                     hop_length=160)
+    else:
+        spectrogram = librosa.feature.melspectrogram(y=np.array(audio),
+                                                     sr=rate)
     if normalize:
         spectrogram = np.log10(1000 * spectrogram + 1)
     return spectrogram
@@ -212,7 +219,6 @@ def split_and_augment_dataset(audio_dir: str,
         split_index = 1
         # Double noise augmentation because there are less recordings
         n_noise = 10
-        n_pitch = 0
     elif y_type == "speakers_default":
         categories = ['jackson', 'nicolas', 'theo', 'yweweler']
         split_index = 1
@@ -277,7 +283,8 @@ def prepare_augmented_recordings(audio_dirs: List[str],
                                  include_pitch: bool,
                                  max_length: int,
                                  recordings_source: List[bool],
-                                 transform_function="spectrogram"):
+                                 transform_function="spectrogram",
+                                 paper_data=False):
     """
     Augment, split in train-val-test and compute spectrograms of the given recordings
     :param audio_dirs: list of path where the recordings of interest are stored
@@ -287,6 +294,7 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     :param max_length: maximum length a given recording should have in order to be included
     :param recordings_source: whether the current recordings are made by us(useful for setting data augmentation params)
     :param transform_function: whether to transform recordings using MFCC or spectrograms
+    :param paper_data: whether to transform the data as specified in the paper or not
     :return:
     """
     X_train = []
@@ -315,19 +323,20 @@ def prepare_augmented_recordings(audio_dirs: List[str],
     y_val = [np.array(x) for x in y_val]
     X_test = [np.array(x) for x in X_test]
     y_test = [np.array(x) for x in y_test]
-    X_train, X_val, X_test = transform_recordings(X_train, X_val, X_test, transform_function)
+    X_train, X_val, X_test = transform_recordings(X_train, X_val, X_test, transform_function, paper_data)
     X_data = [np.array(X_train), np.array(X_val), np.array(X_test)]
-    y_data = [np.array(y_train),  np.array(y_val), np.array(y_test)]
+    y_data = [np.array(y_train), np.array(y_val), np.array(y_test)]
     return X_data, y_data
 
 
-def transform_recordings(X_train, X_val, X_test, transform_function):
+def transform_recordings(X_train, X_val, X_test, transform_function, paper_data):
     """
     Normalize through padding and compute the spectrograms of train, validation and test recordings
     :param X_train: train recordings
     :param X_val: validation recordings
     :param X_test: test recordings
     :param transform_function: whether to apply spectrogram or mfcc
+    :param paper_data: whether to transform the recordings as specified in the paper or not
     :return:
     """
     print("transform_recordings >>>")
@@ -338,9 +347,9 @@ def transform_recordings(X_train, X_val, X_test, transform_function):
     X_test = pad_zeros(X_test, compute_max_rec_length=False, max_rec_length=max_length_rec)
     # Now let's transform our recordings the spectrograms
     if transform_function == "spectrogram":
-        X_train = [compute_spectrogram(x, normalize=True) for x in X_train]
-        X_val = [compute_spectrogram(x, normalize=True) for x in X_val]
-        X_test = [compute_spectrogram(x, normalize=True) for x in X_test]
+        X_train = [compute_spectrogram(x, normalize=True, paper_data=paper_data) for x in X_train]
+        X_val = [compute_spectrogram(x, normalize=True, paper_data=paper_data) for x in X_val]
+        X_test = [compute_spectrogram(x, normalize=True, paper_data=paper_data) for x in X_test]
     else:
         X_train = [mfcc(x, flatten=False) for x in X_train]
         X_val = [mfcc(x, flatten=False) for x in X_val]
