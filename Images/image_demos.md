@@ -36,7 +36,7 @@ This seems to be the only case where the model's performance is very unsatisfact
 
 **Best Model: Doublesteps with 100% accuracy**
 
-![Khaled](gifs/comparisons/30_comparison_khaled1.gif)
+![Khaled](gifs/comparisons/30_comparison_khaled2.gif)
 
 ## Luca
 
