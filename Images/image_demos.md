@@ -19,7 +19,7 @@
 
 **Camilla with glasses. Best Model: Basic model with ~43% final accuracy**
 
-This seems the only case where the model's performance is very unsatisfactory (note that the models were not trained on pictures of Camilla wearing glasses)
+This seems to be the only case where the model's performance is very unsatisfactory (note that the models were not trained on pictures of Camilla wearing glasses)
 
 ![Camilla with glasses](gifs/comparisons/30_comparison_cami2.gif)
 
@@ -48,7 +48,7 @@ Luca's demos are interesting as the model was trained exclusively on pictures of
 
 **Luca half shaved. Best Model: basic model with ~91% final accuracy**
 
-![Luca Half shaved](gifs/comparisons/30_comparison_luca4.gif)
+![Luca half shaved](gifs/comparisons/30_comparison_luca4.gif)
 
 **Luca almost shaved. Best Model: basic model with ~73% final accuracy**
 
