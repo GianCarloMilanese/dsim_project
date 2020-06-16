@@ -357,6 +357,13 @@ def transform_recordings(X_train, X_val, X_test, transform_function, paper_data)
 
 
 def balanced_train_val_test_split(X, y, train_size=0.6):
+    """
+    Split the current X and y in balanced (all labels have the same n of recordings) train, val and test set
+    :param X:
+    :param y:
+    :param train_size:
+    :return:
+    """
     X_train = []
     X_val = []
     X_test = []
@@ -365,7 +372,7 @@ def balanced_train_val_test_split(X, y, train_size=0.6):
     y_test = []
     # Find out unique values and their occurences
     unique, counts = np.unique(y, return_counts=True)
-    # Occurences of the least frequent clas
+    # Occurences of the least frequent class
     min_len = np.min(counts)
     # How many samples should train, val and test have:
     train_freq = int(min_len * train_size)
@@ -376,7 +383,7 @@ def balanced_train_val_test_split(X, y, train_size=0.6):
         np.random.shuffle(current_indexes)
         train_indexes = current_indexes[0:train_freq]
         val_indexes = current_indexes[train_freq:train_freq + val_freq]
-        test_indexes = current_indexes[train_freq + val_freq:]
+        test_indexes = current_indexes[train_freq + val_freq: train_freq + val_freq + test_freq]
         X_train = X_train + [X[i] for i in train_indexes]
         y_train = y_train + [y[i] for i in train_indexes]
         X_val = X_val + [X[i] for i in val_indexes]
@@ -389,6 +396,13 @@ def balanced_train_val_test_split(X, y, train_size=0.6):
 
 
 def balanced_train_val_split(X, y, train_size=0.75):
+    """
+    Split the current X and y in balanced (all labels have the same n of recordings) train and validation set
+    :param X:
+    :param y:
+    :param train_size: how big should the train set be, compared to the validation set
+    :return:
+    """
     X_train = []
     X_val = []
     y_val = []
