@@ -29,6 +29,6 @@ The project is structured as follows:
   
 We highly encourage you to **[have a look at our demo gifs](./Images/README.md)** so that you can see how the model behaves while recognising different people!
 - **[Retrieval](./Retrieval/)**:
-  - [0_choose_model.ipynb](./Retrieval/0_choose_model.ipynb): we evaluate different models on our own dataset in order to choose the one to use for the task of finding the most similar celebrities to a given picture. The model with the best scores ended up to make very inconsistent predictions on the celebrities dataset, so Mobilenet was used for the final retrieval task.
-  - the notebook [1_retrieval.ipynb](1_retrieval.ipynb) can be used for finding which are the top 10 most similar celebrities to a given query picture
+  - [Retrieval/0_choose_model.ipynb](./Retrieval/0_choose_model.ipynb): we evaluate different models on our own dataset in order to choose the one to use for the task of finding the most similar celebrities to a given picture. The model with the best scores ended up to make very inconsistent predictions on the celebrities dataset, so Mobilenet was used for the final retrieval task.
+  - the notebook [Retrieval/1_retrieval.ipynb](1_retrieval.ipynb) can be used for finding which are the top 10 most similar celebrities to a given query picture
 
