@@ -75,6 +75,9 @@ def enrich_dataset(audio_dir: str, mode: str, n_noise: int, n_pitch: int, record
     if recordings_made_by_us:
         MAX_STDEV = 0.05
         MIN_STDEV = 0.002
+        # Our recording are less (100 per speaker vs 500 per speaker), therefore we will do more augmentation
+        n_noise = n_noise * 2
+        n_pitch = n_pitch * 2
     else:
         MAX_STDEV = 0.025
         MIN_STDEV = 0.001

@@ -217,8 +217,6 @@ def split_and_augment_dataset(audio_dir: str,
         categories = ['_gian_', '_alinda_', '_khaled_', '_ale_']
         # Used later on for getting y label
         split_index = 1
-        # Double noise augmentation because there are less recordings
-        n_noise = 10
     elif y_type == "speakers_default":
         categories = ['jackson', 'nicolas', 'theo', 'yweweler']
         split_index = 1
