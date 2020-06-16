@@ -23,10 +23,12 @@ The project is structured as follows:
   - [3_test_model_audio.ipynb](./Audio/3_test_model_audio.ipynb): here you can test the two best models we created
 - **[Images](./Images)**:
   - [0_take_pictures.ipynb](./Images/0_take_pictures.ipynb): this notebook can be used for quickly taking pictures of the current user
-  - [1_preprocess_pictures.ipynb](./Images/1_preprocess_pictures.ipynb): here we show the various preprocessing functions used for transforming input images so that predictive models will be more efficient
-  - [2_train_model.ipynb](./Images/2_train_model.ipynb): this is the core notebook for the Image part, where we train various models in order to find out the best face recognition model. Best models are store in the [models directory](./Images/models)
+  - [1_preprocess_pictures.ipynb](./Images/1_preprocess_pictures.ipynb): here we show the various preprocessing functions used for transforming input images so that predictive models will be more effective
+  - [2_train_model.ipynb](./Images/2_train_model.ipynb): this is the core notebook for the Image part, where we train various models in order to find out the best face recognition model. The final models are stored in the [models directory](./Images/models)
   - [3_test_model_images.ipynb](./Images/3_test_model_images.ipynb): here you can test the best models and find out who you are most similar with.
   
-We highly encourage you to **[have a look at our demo gifs](./Images/image_demos.md)** so that you can see how the model behaves while recognising different people!
-- **[Retrieval](./Retrieval/)**: you will find the notebook [3_Image_retrieval.ipynb](3_Image_retrieval.ipynb) that can be used for finding which are the 10 VIP faces most similar to the current user
+We highly encourage you to **[have a look at our demo gifs](./Images/README.md)** so that you can see how the model behaves while recognising different people!
+- **[Retrieval](./Retrieval/)**:
+  - [0_choose_model.ipynb](./Retrieval/0_choose_model.ipynb): we evaluate different models on our own dataset in order to choose the one to use for the task of finding the most similar celebrities to a given picture. The model with the best scores ended up to make very inconsistent predictions on the celebrities dataset, so Mobilenet was used for the final retrieval task.
+  - the notebook [1_retrieval.ipynb](1_retrieval.ipynb) can be used for finding which are the top 10 most similar celebrities to a given query picture
 
