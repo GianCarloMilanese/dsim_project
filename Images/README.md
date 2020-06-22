@@ -89,7 +89,7 @@ Basic convolutional architecture, first model trained on heavily resized picture
 
 ![Ensemble](gifs/20_0.gif)
 
-**Flaw: Gian + hair on forehad = Mamma**
+**Flaw: Gian + hair on forehead = Mamma**
 
 ![Flaw](gifs/20_1.gif)
 
